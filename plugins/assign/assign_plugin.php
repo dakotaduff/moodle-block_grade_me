@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Grade Me Moodle 2.2+ assignment plugin.
+ * Grade Me Moodle 2.3+ assign plugin.
  *
  * @package    block_grade_me
  * @copyright  2013 Dakota Duff {@link http://www.remote-learner.net}
@@ -23,11 +23,11 @@
  */
 
 /**
- * @return array Specifics on the capabilities of the assignment plugin type
+ * @return array Specifics on the capabilities of the assign plugin type
  */
-function block_grade_me_required_capability_assignment() {
-    $enabled_plugins['assignment'] = array(
-        'capability' => 'mod/assignment:grade',
+function block_grade_me_required_capability_assign() {
+    $enabled_plugins['assign'] = array(
+        'capability' => 'mod/assign:grade',
         'default_on' => true,
         'versiondependencies' => 'ANY_VERSION'
         );
@@ -35,12 +35,12 @@ function block_grade_me_required_capability_assignment() {
 }
 
 /**
- * Build SQL query for the assignment plugin for Moodle 2.3 and later
+ * Build SQL query for the assignment (assign) plugin for Moodle 22 and earlier
  *
  * @param array $gradebookusers ID's of gradebook users
- * @return array|bool SQL query and parameters or false on failure
+ * @return mixed SQL query and parameters or false on failure
  */
-function block_grade_me_query_assignment($gradebookusers) {
+function block_grade_me_query_assign($gradebookusers) {
     global $DB;
 
     if (empty($gradebookusers)) {
@@ -49,12 +49,12 @@ function block_grade_me_query_assignment($gradebookusers) {
     list($insql, $inparams) = $DB->get_in_or_equal($gradebookusers);
 
     $query = ", asgn_sub.id submissionid, asgn_sub.userid, asgn_sub.timemodified timesubmitted
-        FROM {assignment_submissions} asgn_sub
-        JOIN {assignment} a ON a.id = asgn_sub.assignment
+        FROM {assign_submission} asgn_sub
+        JOIN {assign} a ON a.id = asgn_sub.assignment
    LEFT JOIN {block_grade_me} bgm ON bgm.courseid = a.course AND bgm.iteminstance = a.id
+   LEFT JOIN {assign_grades} ag ON ag.assignment = asgn_sub.assignment AND ag.userid = asgn_sub.userid
        WHERE asgn_sub.userid $insql
-             AND a.grade > 0
-             AND asgn_sub.timemarked < asgn_sub.timemodified";
+         AND (ag.id IS NULL OR asgn_sub.timemodified > ag.timemodified)";
 
     return array($query, $inparams);
 }
